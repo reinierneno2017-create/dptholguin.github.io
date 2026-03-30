@@ -522,11 +522,11 @@
 
 <script>
     // ========== CONFIGURACIÓN DE SUPABASE ==========
-    // ✅ YA CONFIGURADO CON TUS CREDENCIALES ✅
     const SUPABASE_URL = 'https://ywkpnyqcfklkuetcklks.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3a3BueXFjZmtsa3VldGNrbGtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODIyMjYsImV4cCI6MjA5MDQ1ODIyNn0.dq2GPOmL4fPRtLYfJidA_8YZBtsncQAZpk3e_U9_sFs';
 
-    const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Usamos una variable con nombre único para evitar conflictos
+    const supabaseClient = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // Variables globales
     let currentUser = null;
@@ -548,43 +548,43 @@
     
     // ========== FUNCIONES DE CARGA DE DATOS DESDE SUPABASE ==========
     async function loadBusServices() {
-        const { data, error } = await supabase.from('bus_services').select('*').order('id');
+        const { data, error } = await supabaseClient.from('bus_services').select('*').order('id');
         if (error) { console.error('Error cargando buses:', error); return []; }
         return data || [];
     }
     
     async function loadTrainServices() {
-        const { data, error } = await supabase.from('train_services').select('*').order('id');
+        const { data, error } = await supabaseClient.from('train_services').select('*').order('id');
         if (error) { console.error('Error cargando trenes:', error); return []; }
         return data || [];
     }
     
     async function loadPermitsCount() {
-        const { data, error } = await supabase.from('permits_config').select('permit_count').single();
+        const { data, error } = await supabaseClient.from('permits_config').select('permit_count').single();
         if (error) { console.error('Error cargando permisos:', error); return 47; }
         return data?.permit_count || 47;
     }
     
     async function loadFlights() {
-        const { data, error } = await supabase.from('flights').select('*').order('scheduled_time');
+        const { data, error } = await supabaseClient.from('flights').select('*').order('scheduled_time');
         if (error) { console.error('Error cargando vuelos:', error); return []; }
         return data || [];
     }
     
     async function loadAccidentsData() {
-        const { data, error } = await supabase.from('accidents_data').select('*').order('id').limit(1);
+        const { data, error } = await supabaseClient.from('accidents_data').select('*').order('id').limit(1);
         if (error) { console.error('Error cargando accidentes:', error); return { month: 'marzo 2026', accidents: 12, injured: 18, deceased: 3 }; }
         return data?.[0] || { month: 'marzo 2026', accidents: 12, injured: 18, deceased: 3 };
     }
     
     async function loadMeetings() {
-        const { data, error } = await supabase.from('meetings').select('*').order('date', { ascending: false });
+        const { data, error } = await supabaseClient.from('meetings').select('*').order('date', { ascending: false });
         if (error) { console.error('Error cargando reuniones:', error); return []; }
         return data || [];
     }
     
     async function loadUsers() {
-        const { data, error } = await supabase.from('users').select('*');
+        const { data, error } = await supabaseClient.from('users').select('*');
         if (error) { console.error('Error cargando usuarios:', error); return []; }
         return data || [];
     }
@@ -818,7 +818,7 @@
     // ========== FUNCIONES ADMIN ==========
     window.updatePermitsCount = async function() {
         const newCount = parseInt(document.getElementById('permitsCountInput').value);
-        await supabase.from('permits_config').update({ permit_count: newCount }).eq('id', 1);
+        await supabaseClient.from('permits_config').update({ permit_count: newCount }).eq('id', 1);
         await renderPermitsPanel();
         alert("Actualizado");
         if (currentUser) renderAdminPanel();
@@ -829,7 +829,7 @@
         const accidents = parseInt(document.getElementById('accidentsInput').value);
         const injured = parseInt(document.getElementById('injuredInput').value);
         const deceased = parseInt(document.getElementById('deceasedInput').value);
-        await supabase.from('accidents_data').update({ month, accidents, injured, deceased }).eq('id', 1);
+        await supabaseClient.from('accidents_data').update({ month, accidents, injured, deceased }).eq('id', 1);
         await renderAccidentsPanel();
         alert("Datos actualizados");
         if (currentUser) renderAdminPanel();
@@ -838,7 +838,7 @@
     window.updateMeeting = async function(id) {
         const place = document.getElementById(`meetingPlace_${id}`).value;
         const reason = document.getElementById(`meetingReason_${id}`).value;
-        await supabase.from('meetings').update({ place, reason }).eq('id', id);
+        await supabaseClient.from('meetings').update({ place, reason }).eq('id', id);
         await renderMeetingsPanel();
         alert("Reunión actualizada");
         if (currentUser) renderAdminPanel();
@@ -846,7 +846,7 @@
     
     window.deleteMeeting = async function(id) {
         if (confirm("¿Eliminar esta reunión?")) {
-            await supabase.from('meetings').delete().eq('id', id);
+            await supabaseClient.from('meetings').delete().eq('id', id);
             await renderMeetingsPanel();
             if (currentUser) renderAdminPanel();
             alert("Eliminada");
@@ -858,7 +858,7 @@
         const place = document.getElementById('newMeetingPlace').value;
         const reason = document.getElementById('newMeetingReason').value;
         if (!date || !place || !reason) { alert("Complete campos"); return; }
-        await supabase.from('meetings').insert([{ date, place, reason }]);
+        await supabaseClient.from('meetings').insert([{ date, place, reason }]);
         await renderMeetingsPanel();
         if (currentUser) renderAdminPanel();
         alert("Reunión agregada");
@@ -867,14 +867,14 @@
     window.updateFlight = async function(flightId) {
         const status = document.getElementById(`status_${flightId}`).value;
         const note = document.getElementById(`note_${flightId}`).value;
-        await supabase.from('flights').update({ status, note }).eq('flight_id', flightId);
+        await supabaseClient.from('flights').update({ status, note }).eq('flight_id', flightId);
         await renderAirportPanel();
         alert("Vuelo actualizado");
     };
     
     window.deleteFlight = async function(flightId) {
         if (confirm("¿Eliminar vuelo?")) {
-            await supabase.from('flights').delete().eq('flight_id', flightId);
+            await supabaseClient.from('flights').delete().eq('flight_id', flightId);
             await renderAirportPanel();
             if (currentUser) renderAdminPanel();
             alert("Eliminado");
@@ -888,7 +888,7 @@
         const time = document.getElementById('newFlightTime').value;
         const status = document.getElementById('newFlightStatus').value;
         if (!flightId || !origin || !destination || !time) { alert("Complete campos"); return; }
-        await supabase.from('flights').insert([{ flight_id: flightId, origin, destination, scheduled_time: time, status }]);
+        await supabaseClient.from('flights').insert([{ flight_id: flightId, origin, destination, scheduled_time: time, status }]);
         await renderAirportPanel();
         if (currentUser) renderAdminPanel();
         alert("Vuelo agregado");
@@ -903,7 +903,7 @@
         const note = document.getElementById('newBusNote').value;
         if (!direction || !time) { alert("Dirección y hora obligatorios"); return; }
         const scheduleId = `new_${Date.now()}`;
-        await supabase.from('bus_services').insert([{
+        await supabaseClient.from('bus_services').insert([{
             service_name: company, route_direction: direction, schedule_id: scheduleId,
             schedule_time: time, days: days || "Consultar", platform: platform || "Por definir",
             note: note || "Servicio agregado", status: 'active', visible: true
@@ -921,7 +921,7 @@
         const note = document.getElementById('newTrainNote').value;
         if (!direction || !time) { alert("Dirección y hora obligatorios"); return; }
         const scheduleId = `train_new_${Date.now()}`;
-        await supabase.from('train_services').insert([{
+        await supabaseClient.from('train_services').insert([{
             train_name: "Tren Nacional", route_direction: direction, schedule_id: scheduleId,
             schedule_time: time, days: days || "Consultar", platform: platform || "Por definir",
             note: note || "Servicio agregado", status: 'active', visible: true
@@ -934,7 +934,7 @@
     window.deleteSchedule = async function(id, type) {
         if (confirm("¿Eliminar permanentemente?")) {
             const table = type === 'bus' ? 'bus_services' : 'train_services';
-            await supabase.from(table).delete().eq('schedule_id', id);
+            await supabaseClient.from(table).delete().eq('schedule_id', id);
             if (type === 'bus') await renderBusPanel();
             else await renderTrainPanel();
             if (currentUser) renderAdminPanel();
@@ -946,7 +946,7 @@
         const newTime = document.getElementById(`newTime_${id}`).value;
         if (!newTime) { alert("Ingrese nueva hora"); return; }
         const table = type === 'bus' ? 'bus_services' : 'train_services';
-        await supabase.from(table).update({ schedule_time: newTime }).eq('schedule_id', id);
+        await supabaseClient.from(table).update({ schedule_time: newTime }).eq('schedule_id', id);
         if (type === 'bus') await renderBusPanel();
         else await renderTrainPanel();
         alert("Horario actualizado");
@@ -959,7 +959,7 @@
         const table = type === 'bus' ? 'bus_services' : 'train_services';
         const updateData = { status: 'delayed', delay_reason: reason };
         if (newTime) updateData.new_time = newTime;
-        await supabase.from(table).update(updateData).eq('schedule_id', id);
+        await supabaseClient.from(table).update(updateData).eq('schedule_id', id);
         if (type === 'bus') await renderBusPanel();
         else await renderTrainPanel();
         alert("Marcada como DEMORADA");
@@ -969,7 +969,7 @@
         const reason = document.getElementById(`reason_${id}`).value;
         if (!reason) { alert("Especifique motivo"); return; }
         const table = type === 'bus' ? 'bus_services' : 'train_services';
-        await supabase.from(table).update({ status: 'cancelled', delay_reason: reason }).eq('schedule_id', id);
+        await supabaseClient.from(table).update({ status: 'cancelled', delay_reason: reason }).eq('schedule_id', id);
         if (type === 'bus') await renderBusPanel();
         else await renderTrainPanel();
         alert("Salida CANCELADA");
@@ -977,7 +977,7 @@
     
     window.reactivateSchedule = async function(id, type) {
         const table = type === 'bus' ? 'bus_services' : 'train_services';
-        await supabase.from(table).update({ status: 'active', delay_reason: null, new_time: null }).eq('schedule_id', id);
+        await supabaseClient.from(table).update({ status: 'active', delay_reason: null, new_time: null }).eq('schedule_id', id);
         if (type === 'bus') await renderBusPanel();
         else await renderTrainPanel();
         alert("Salida reactivada");
@@ -996,14 +996,14 @@
         if (document.getElementById('permAccidents').checked) permissions.push('accidents');
         if (document.getElementById('permMeetings').checked) permissions.push('meetings');
         if (permissions.length === 0) { alert("Seleccione al menos un permiso"); return; }
-        await supabase.from('users').insert([{ username, password, name, role: 'admin', permissions }]);
+        await supabaseClient.from('users').insert([{ username, password, name, role: 'admin', permissions }]);
         alert(`Usuario ${username} creado`);
         if (currentUser) renderAdminPanel();
     };
     
     window.deleteUser = async function(userId) {
         if (confirm("¿Eliminar usuario?")) {
-            await supabase.from('users').delete().eq('id', userId);
+            await supabaseClient.from('users').delete().eq('id', userId);
             if (currentUser) renderAdminPanel();
             alert("Usuario eliminado");
         }
@@ -1020,7 +1020,7 @@
     
     // Login con Supabase
     async function loginUser(username, password) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('users')
             .select('*')
             .eq('username', username)
