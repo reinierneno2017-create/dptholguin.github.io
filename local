@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>DPT Holguín - Dirección Provincial de Transporte</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a2a3a;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2rem;
+            color: #1e5a48;
+            margin-bottom: 5px;
+        }
+        .header p {
+            color: #6b7a6f;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            background: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 0.75rem;
+        }
+        .tab.active {
+            background: #1e5a48;
+            color: white;
+        }
+        
+        .panel { display: none; }
+        .panel.active-panel { display: block; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .card-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-header i { font-size: 1.8rem; color: #1e5a48; }
+        .card-header h3 { font-size: 1.2rem; }
+        .card-body { padding: 20px; }
+        
+        .route-title {
+            background: #e8f0ed;
+            padding: 8px 15px;
+            border-radius: 30px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .schedule-item {
+            background: #fafdfa;
+            border-left: 4px solid #2c8b6e;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+        }
+        .schedule-time {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #1a6b54;
+        }
+        .schedule-days {
+            background: #fff3cf;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+        }
+        .schedule-platform {
+            font-size: 0.8rem;
+            color: #6b8b7c;
+            margin-top: 5px;
+        }
+        .schedule-item.cancelled { background: #f8d7da; border-left-color: #dc3545; }
+        .schedule-item.delayed { background: #fff3cd; border-left-color: #ffc107; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+        }
+        .stat-label {
+            font-size: 1rem;
+            color: #6b7a6f;
+            margin-top: 10px;
+        }
+        .stat-card.accidentes .stat-number { color: #dc3545; }
+        .stat-card.lesionados .stat-number { color: #fd7e14; }
+        .stat-card.fallecidos .stat-number { color: #6c757d; }
+        .month-badge {
+            background: #e8ece6;
+            padding: 8px 20px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .meeting-card {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 16px;
+            border-left: 4px solid #1e5a48;
+        }
+        .meeting-date {
+            font-weight: 800;
+            color: #1e5a48;
+            margin-bottom: 5px;
+        }
+        
+        .admin-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 2px solid #ffd966;
+            display: none;
+        }
+        .admin-btn {
+            background: #2c5a4a;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background: #1a3a32;
+            color: #b8d4c8;
+            border-radius: 20px;
+        }
+        
+        .login-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .login-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 320px;
+            text-align: center;
+        }
+        .login-card input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 30px;
+            border: 1px solid #ddd;
+        }
+        .login-card button {
+            background: #1e5a48;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 30px;
+            width: 100%;
+            cursor: pointer;
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e5a48;
+            color: white;
+            border: none;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 999;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        .refresh-btn:hover {
+            background: #0f3a2d;
+            transform: rotate(180deg);
+        }
+        
+        .btn-edit { background: #ffc107; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; margin: 2px; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
+        .btn-add { background: #28a745; color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
+        .btn-delay { background: #fd7e14; color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
+        
+        @media (max-width: 700px) {
+            body { padding: 10px; }
+            .grid { grid-template-columns: 1fr; }
+            .refresh-btn { width: 45px; height: 45px; font-size: 1rem; }
+            .tab { padding: 6px 10px; font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-bus"></i> DPT Holguín</h1>
+        <p>Dirección Provincial de Transporte - Información de salidas</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showPanel('bus')">🚌 ÓMNIBUS</button>
+        <button class="tab" onclick="showPanel('train')">🚆 TREN</button>
+        <button class="tab" onclick="showPanel('permits')">📄 PERMISOS</button>
+        <button class="tab" onclick="showPanel('flights')">✈️ AEROPUERTO</button>
+        <button class="tab" onclick="showPanel('accidents')">📊 SEGURIDAD VIAL</button>
+        <button class="tab" onclick="showPanel('meetings')">📅 REUNIONES</button>
+    </div>
+
+    <!-- Panel ÓMNIBUS -->
+    <div id="panelBus" class="panel active-panel">
+        <div class="grid">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-bus"></i><h3>Viazul</h3></div>
+                <div class="card-body">
+                    <div class="route-title">Holguín → La Habana</div>
+                    <div class="schedule-item"><div><span class="schedule-time">07:30</span><span class="schedule-days">Lun, Mié, Vie, Dom</span></div><div class="schedule-platform">Andén 5</div><div class="schedule-platform">Aire acondicionado</div></div>
+                    <div class="schedule-item"><div><span class="schedule-time">14:15</span><span class="schedule-days">Mar, Jue, Sáb</span></div><div class="schedule-platform">Andén 5</div><div class="schedule-platform">Expreso</div></div>
+                    <div class="route-title">La Habana → Holguín</div>
+                    <div class="schedule-item"><div><span class="schedule-time">08:00</span><span class="schedule-days">Lun, Mié, Vie, Dom</span></div><div class="schedule-platform">Andén 12</div><div class="schedule-platform">Viazul Habana</div></div>
+                    <div class="schedule-item"><div><span class="schedule-time">15:30</span><span class="schedule-days">Mar, Jue, Sáb</span></div><div class="schedule-platform">Andén 12</div><div class="schedule-platform">Directo</div></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><i class="fas fa-bus"></i><h3>Astro</h3></div>
+                <div class="card-body">
+                    <div class="route-title">Holguín → La Habana</div>
+                    <div class="schedule-item"><div><span class="schedule-time">06:00</span><span class="schedule-days">Diario</span></div><div class="schedule-platform">Andén 8</div><div class="schedule-platform">Regular</div></div>
+                    <div class="schedule-item"><div><span class="schedule-time">12:30</span><span class="schedule-days">Diario</span></div><div class="schedule-platform">Andén 8</div><div class="schedule-platform">Expreso</div></div>
+                    <div class="schedule-item"><div><span class="schedule-time">19:45</span><span class="schedule-days">Diario</span></div><div class="schedule-platform">Andén 9</div><div class="schedule-platform">Nocturno</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel TREN -->
+    <div id="panelTrain" class="panel">
+        <div class="grid">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-train"></i><h3>Tren Nacional</h3></div>
+                <div class="card-body">
+                    <div class="route-title">Holguín → La Habana</div>
+                    <div class="schedule-item"><div><span class="schedule-time">15:20</span><span class="schedule-days">Mar, Jue, Sáb</span></div><div class="schedule-platform">Estación Central</div><div class="schedule-platform">14 horas de viaje</div></div>
+                    <div class="route-title">La Habana → Holguín</div>
+                    <div class="schedule-item"><div><span class="schedule-time">09:30</span><span class="schedule-days">Lun, Mié, Vie</span></div><div class="schedule-platform">Estación Central</div><div class="schedule-platform">Llega al día siguiente</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel PERMISOS -->
+    <div id="panelPermits" class="panel">
+        <div style="background:linear-gradient(135deg,#1e5a48,#0f3a2d); border-radius:20px; padding:40px; text-align:center; color:white;">
+            <div style="font-size:4rem; font-weight:800; color:#ffd966;" id="permitsNumber">47</div>
+            <div>Medios con Permiso Excepcional</div>
+        </div>
+    </div>
+
+    <!-- Panel AEROPUERTO -->
+    <div id="panelFlights" class="panel">
+        <div class="grid">
+            <div class="card"><div class="card-header"><i class="fas fa-plane"></i><h3>CU 801</h3></div><div class="card-body"><div><strong>La Habana</strong> → <strong>Holguín</strong></div><div class="schedule-time" style="font-size:1rem;">08:30</div><div><span style="display:inline-block; padding:3px 12px; border-radius:20px; background:#28a745; color:white;">Programado</span></div></div></div>
+            <div class="card"><div class="card-header"><i class="fas fa-plane"></i><h3>CU 802</h3></div><div class="card-body"><div><strong>Holguín</strong> → <strong>La Habana</strong></div><div class="schedule-time" style="font-size:1rem;">10:15</div><div><span style="display:inline-block; padding:3px 12px; border-radius:20px; background:#28a745; color:white;">Programado</span></div></div></div>
+            <div class="card"><div class="card-header"><i class="fas fa-plane"></i><h3>CU 803</h3></div><div class="card-body"><div><strong>Miami</strong> → <strong>Holguín</strong></div><div class="schedule-time" style="font-size:1rem;">11:45</div><div><span style="display:inline-block; padding:3px 12px; border-radius:20px; background:#28a745; color:white;">Programado</span></div></div></div>
+            <div class="card"><div class="card-header"><i class="fas fa-plane"></i><h3>IB 323</h3></div><div class="card-body"><div><strong>Madrid</strong> → <strong>Holguín</strong></div><div class="schedule-time" style="font-size:1rem;">17:45</div><div><span style="display:inline-block; padding:3px 12px; border-radius:20px; background:#fd7e14; color:white;">Demora</span></div><div class="schedule-platform">Aterrizaje estimado 19:30</div></div></div>
+        </div>
+    </div>
+
+    <!-- Panel SEGURIDAD VIAL -->
+    <div id="panelAccidents" class="panel">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-chart-line"></i><h3>Comportamiento de la Accidentalidad</h3></div>
+            <div class="card-body">
+                <div class="month-badge"><i class="fas fa-calendar"></i> marzo 2026</div>
+                <div class="stats-grid">
+                    <div class="stat-card accidentes"><i class="fas fa-car-crash" style="font-size: 2rem; color: #dc3545;"></i><div class="stat-number">12</div><div class="stat-label">Accidentes</div></div>
+                    <div class="stat-card lesionados"><i class="fas fa-user-injured" style="font-size: 2rem; color: #fd7e14;"></i><div class="stat-number">18</div><div class="stat-label">Lesionados</div></div>
+                    <div class="stat-card fallecidos"><i class="fas fa-skull-crossbones" style="font-size: 2rem; color: #6c757d;"></i><div class="stat-number">3</div><div class="stat-label">Fallecidos</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel REUNIONES -->
+    <div id="panelMeetings" class="panel">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-calendar-alt"></i><h3>Reuniones de Última Hora</h3></div>
+            <div class="card-body">
+                <div class="meeting-card"><div class="meeting-date"><i class="fas fa-calendar-day"></i> 28 de marzo de 2026</div><div><i class="fas fa-map-marker-alt"></i> <strong>Lugar:</strong> Terminal de Ómnibus</div><div style="margin-top:5px;"><i class="fas fa-comment-dots"></i> <strong>Motivo:</strong> Revisión de horarios de verano</div></div>
+                <div class="meeting-card"><div class="meeting-date"><i class="fas fa-calendar-day"></i> 30 de marzo de 2026</div><div><i class="fas fa-map-marker-alt"></i> <strong>Lugar:</strong> Estación Central de Trenes</div><div style="margin-top:5px;"><i class="fas fa-comment-dots"></i> <strong>Motivo:</strong> Mantenimiento de vías</div></div>
+                <div class="meeting-card"><div class="meeting-date"><i class="fas fa-calendar-day"></i> 2 de abril de 2026</div><div><i class="fas fa-map-marker-alt"></i> <strong>Lugar:</strong> Aeropuerto Frank País</div><div style="margin-top:5px;"><i class="fas fa-comment-dots"></i> <strong>Motivo:</strong> Coordinación con aerolíneas</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin -->
+    <div style="text-align: center; margin: 20px 0;">
+        <button class="admin-btn" onclick="showLogin()"><i class="fas fa-lock"></i> Administración</button>
+    </div>
+    <div id="adminPanel" class="admin-panel"></div>
+
+    <div class="footer">
+        <p><i class="fas fa-code"></i> Desarrollado Por Reynier Velázquez Morales - Todos los Derechos Reservados</p>
+    </div>
+</div>
+
+<button class="refresh-btn" onclick="window.location.reload()">
+    <i class="fas fa-sync-alt"></i>
+</button>
+
+<script>
+    let currentUser = null;
+    let permitsCount = 47;
+    
+    // Datos locales para admin
+    let meetingsData = [
+        { id: "m1", date: "2026-03-28", place: "Terminal de Ómnibus", reason: "Revisión de horarios de verano" },
+        { id: "m2", date: "2026-03-30", place: "Estación Central de Trenes", reason: "Mantenimiento de vías" },
+        { id: "m3", date: "2026-04-02", place: "Aeropuerto Frank País", reason: "Coordinación con aerolíneas" }
+    ];
+
+    function showPanel(panel) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-panel'));
+        document.getElementById('panel' + panel.charAt(0).toUpperCase() + panel.slice(1)).classList.add('active-panel');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    function renderAdminPanel() {
+        if (!currentUser) return;
+        let html = `<div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+            <h3>Panel Admin - ${currentUser.name}</h3>
+            <button onclick="logout()" style="background:#dc3545; color:white; border:none; padding:8px 15px; border-radius:30px;">Cerrar</button>
+        </div>`;
+        
+        html += `<div style="margin-bottom:20px; padding:15px; background:#f8f9fa; border-radius:15px;">
+            <h4>📄 Permisos Excepcionales</h4>
+            <input type="number" id="permitsInput" value="${permitsCount}" style="width:100px; padding:5px;">
+            <button onclick="actualizarPermisos()" class="btn-edit">Actualizar</button>
+        </div>`;
+        
+        html += `<div style="margin-bottom:20px; padding:15px; background:#f8f9fa; border-radius:15px;">
+            <h4>📅 Reuniones</h4>`;
+        meetingsData.forEach(m => {
+            html += `<div style="background:white; padding:10px; margin-bottom:8px; border-radius:12px;">
+                <strong>${m.date}</strong> - ${m.place}<br>
+                <input type="text" id="meetingPlace_${m.id}" value="${m.place}" style="width:150px;">
+                <input type="text" id="meetingReason_${m.id}" value="${m.reason}" style="width:200px;">
+                <button onclick="actualizarReunion('${m.id}')" class="btn-edit">Actualizar</button>
+                <button onclick="eliminarReunion('${m.id}')" class="btn-delete">Eliminar</button>
+            </div>`;
+        });
+        html += `<div style="margin-top:10px;">
+            <input type="date" id="newMeetingDate" style="width:130px;">
+            <input type="text" id="newMeetingPlace" placeholder="Lugar" style="width:120px;">
+            <input type="text" id="newMeetingReason" placeholder="Motivo" style="width:150px;">
+            <button onclick="agregarReunion()" class="btn-add">Agregar</button>
+        </div></div>`;
+        
+        document.getElementById('adminPanel').innerHTML = html;
+        document.getElementById('adminPanel').style.display = 'block';
+    }
+
+    window.actualizarPermisos = function() {
+        permitsCount = parseInt(document.getElementById('permitsInput').value);
+        document.getElementById('permitsNumber').innerText = permitsCount;
+        alert('Permisos actualizados');
+    };
+
+    window.actualizarReunion = function(id) {
+        const place = document.getElementById(`meetingPlace_${id}`).value;
+        const reason = document.getElementById(`meetingReason_${id}`).value;
+        const meeting = meetingsData.find(m => m.id === id);
+        if (meeting) {
+            meeting.place = place;
+            meeting.reason = reason;
+            alert('Reunión actualizada');
+            renderAdminPanel();
+            actualizarVistaReuniones();
+        }
+    };
+
+    window.eliminarReunion = function(id) {
+        if (confirm('¿Eliminar esta reunión?')) {
+            const index = meetingsData.findIndex(m => m.id === id);
+            if (index !== -1) meetingsData.splice(index, 1);
+            alert('Reunión eliminada');
+            renderAdminPanel();
+            actualizarVistaReuniones();
+        }
+    };
+
+    window.agregarReunion = function() {
+        const date = document.getElementById('newMeetingDate').value;
+        const place = document.getElementById('newMeetingPlace').value;
+        const reason = document.getElementById('newMeetingReason').value;
+        if (!date || !place || !reason) { alert('Complete todos los campos'); return; }
+        const newId = 'm' + (meetingsData.length + 1);
+        meetingsData.push({ id: newId, date: date, place: place, reason: reason });
+        alert('Reunión agregada');
+        renderAdminPanel();
+        actualizarVistaReuniones();
+        document.getElementById('newMeetingDate').value = '';
+        document.getElementById('newMeetingPlace').value = '';
+        document.getElementById('newMeetingReason').value = '';
+    };
+
+    function actualizarVistaReuniones() {
+        const meetingsList = document.getElementById('meetingsList');
+        if (!meetingsList) return;
+        let html = '';
+        meetingsData.forEach(item => {
+            const fecha = new Date(item.date);
+            const fechaStr = fecha.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+            html += `<div class="meeting-card"><div class="meeting-date"><i class="fas fa-calendar-day"></i> ${fechaStr}</div><div><i class="fas fa-map-marker-alt"></i> <strong>Lugar:</strong> ${item.place}</div><div style="margin-top:5px;"><i class="fas fa-comment-dots"></i> <strong>Motivo:</strong> ${item.reason}</div></div>`;
+        });
+        meetingsList.innerHTML = html || '<p>No hay reuniones programadas</p>';
+    }
+
+    async function login(username, password) {
+        if (username === 'admin' && password === 'transporte2026') {
+            return { name: 'Super Administrador', role: 'super_admin' };
+        }
+        return null;
+    }
+
+    window.showLogin = function() {
+        const overlay = document.createElement('div');
+        overlay.className = 'login-overlay';
+        overlay.innerHTML = `
+            <div class="login-card">
+                <h3>🔐 Acceso Admin</h3>
+                <input type="text" id="loginUser" placeholder="Usuario">
+                <input type="password" id="loginPass" placeholder="Contraseña">
+                <button onclick="doLogin()">Ingresar</button>
+                <button onclick="closeLogin()" style="background:#ccc; margin-top:10px;">Cancelar</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    };
+
+    window.doLogin = async function() {
+        const user = document.getElementById('loginUser').value;
+        const pass = document.getElementById('loginPass').value;
+        const usuario = await login(user, pass);
+        if (usuario) {
+            currentUser = usuario;
+            document.querySelector('.login-overlay').remove();
+            renderAdminPanel();
+            alert(`Bienvenido ${usuario.name}`);
+        } else {
+            alert('Usuario o contraseña incorrectos');
+        }
+    };
+
+    window.closeLogin = function() {
+        document.querySelector('.login-overlay')?.remove();
+    };
+
+    window.logout = function() {
+        currentUser = null;
+        document.getElementById('adminPanel').style.display = 'none';
+        alert('Sesión cerrada');
+    };
+</script>
+</body>
+</html>
